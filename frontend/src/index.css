@@ -39,6 +39,40 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 
+  .glowing-border {
+    display: inline-block;
+    padding: 20px;
+    color: white;
+    text-align: center;
+    border: 2px solid #3498db;
+    border-radius: 5px;
+    /* position: relative; */
+    transform: scale(1);
+    animation: glowing 5s infinite;
+  }
+
+  @keyframes glowing {
+    0% {
+      border-color: #3498db;
+      box-shadow: 0 0 5px #3498db;
+      /* transform: scale(1); */
+      /* top: 0px; */
+    }
+    50% {
+      border-color: #2e82cc;
+      box-shadow: 0 0 10px #2eccbf;
+      /* transform: scale(1.1); */
+      /* top: 10px; */
+    }
+    100% {
+      border-color: #3498db;
+      box-shadow: 0 0 5px #3498db;
+      /* transform: scale(1.05); */
+      /* top: 0px; */
+    }
+  }
+
+
   @media only screen and (max-width: 500px) {
     .grid-box {
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

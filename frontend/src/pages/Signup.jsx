@@ -1,24 +1,86 @@
 import { BrainCircuit, ChevronLeft, Eye, EyeOff, Moon, Sun } from 'lucide-react'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { useForm } from "react-hook-form";
 import { useMode } from '../store/mode';
-
+import { Toaster, toast } from 'sonner';
+import axios from '../calls/axios';
+import { safeGet } from "../calls/utils";
+import { useAuth } from '../store/auth';
+import { Load } from '../components';
 
 const styles = {
     input_: "input flex flex-col gap-1.5 mb-4 group",
     input: "bg-transparent border border-[#999] border-opacity-50 dark:border-[#333] py-2 px-3 focus-visible: focus-visible:outline-none focus-visible:ring-0 text-lg rounded-xl relative",
     label: "text-xs opacity-70 font-semibold group-focus-within:opacity-100 group-focus-within:text-emerald-400",
+    error: "error text-xs text-red-500 font-semibold",
 }
 
 const Signup = () => {
 
     const [password, setPassword] = useState(true);
+    const [load, setLoad] = useState(false);
     const navigate = useNavigate();
     const { mode, toggleMode } = useMode();
+    const { setKey } = useAuth();
+
+    const [errors, setErrors] = useState({});
+
+    const { register, handleSubmit } = useForm({
+        defaultValues: {
+          name: '',
+          email: '',
+          password: '',
+        }
+    });
+
+    const signup = async (data) => {
+
+        setLoad(true);
+
+        try {
+
+            const result = await axios.post('/signup', data);
+    
+            console.log(result);
+
+            if (safeGet(result, ["data", "data", "token"])) {
+                setKey(safeGet(result, ["data", "data", "token"]));
+                toast.success("Doc-Ranger Initialized Successfully");
+                navigate('/uploads');
+            }
+            else {
+                toast.warning("Oops", {
+                    description: result.data.message,
+                })
+            }
+        }
+        catch(e) {
+            
+
+            // console.log(e?.response?.data?.errors);
+
+            if(e?.response?.data?.errors) {
+                // setErrors(e.response.data.errors);
+                Object.values(e.response.data.errors).map(error => toast.warning(error))
+            }
+            else
+            toast.error('System Busy', {
+                description: 'Please try again later',
+            });
+
+            // console.log(e);
+        }
+
+        setLoad(false);
+
+    }
 
     return (
         <div className='dark:bg-[#222] dark:text-white min-h-screen relative'>
 
+            <Toaster position='top-center' richColors/>
+            <Load load={load} />
 
             <div className="flex max-[500px]:flex-col">
 
@@ -44,27 +106,32 @@ const Signup = () => {
 
                     </div>
 
-                    <form action="" className="mt-9 mx-auto max-w-[600px]">
+                    <form onSubmit={handleSubmit(signup)} className="mt-9 mx-auto max-w-[600px]">
+
                         <div className={`${styles.input_}`}>
-                            <label htmlFor="email" className={`${styles.label}`}>Email</label>
-                            <input type="text" name="email" className={`${styles.input}`} />
+                            <label htmlFor="name" className={`${styles.label}`}>Full Name</label>
+                            <input {...register("name", { required: true })} type="text" className={`${styles.input}`} />
+                            {errors.name && <div className={styles.error}>{errors.name}</div>}
                         </div>
 
                         <div className={`${styles.input_}`}>
-                            <label htmlFor="username" className={`${styles.label}`}>Username</label>
-                            <input type="text" name="username" className={`${styles.input}`} />
+                            <label htmlFor="email" className={`${styles.label}`}>Email</label>
+                            <input type="text" {...register("email", { required: true })} className={`${styles.input}`} />
+                            {errors.email && <div className={styles.error}>{errors.email}</div>}
                         </div>
+
 
                         <div className={`${styles.input_}`}>
                             <label htmlFor="password" className={`${styles.label}`}>Password</label>
                                 
                             <div className="relative">
-                                <input type={password ? 'password' : 'text'} name="password" className={`${styles.input} w-full`} />
+                                <input type={password ? 'password' : 'text'} {...register("password", { required: true })} className={`${styles.input} w-full`} />
 
                                 <div onClick={()=>setPassword(!password)} className="absolute top-0 right-0 h-full flex items-center justify-center px-3 opacity-50 cursor-pointer">
                                     {password ? <Eye size={25} strokeWidth={1.6}/> : <EyeOff size={25} strokeWidth={1.6}/> }
                                 </div>
                             </div>
+                            {errors.password && <div className={styles.error}>{errors.password}</div>}
                         </div>
 
                         <button className='border-2 border-blue-500 rounded-2xl mt-3 p-0.5 w-full border-opacity-10 hover:border-opacity-100 active:border-emerald-400'>
